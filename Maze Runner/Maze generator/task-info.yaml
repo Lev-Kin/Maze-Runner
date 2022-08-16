@@ -537,6 +537,34 @@ files:
         }
     }
   learner_created: false
+- name: src/maze/Maze.java
+  visible: true
+  text: |+
+    package maze;
+
+    public class Maze {
+
+        private final int[][] matrix;
+
+        public Maze(int[][] matrix) {
+            this.matrix = matrix;
+        }
+
+        public void print() {
+            for (int[] ints : matrix) {
+                for (int anInt : ints) {
+                    System.out.print(anInt == 0 ? "  " : "\u2588\u2588");
+                }
+                System.out.println();
+            }
+        }
+    }
+
+
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/47/stages/252/implement#comment
-status: Unchecked
-record: -1
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Tue, 16 Aug 2022 09:39:09 UTC
+record: 2
