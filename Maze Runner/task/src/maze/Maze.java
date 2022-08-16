@@ -1,16 +1,21 @@
 package maze;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.function.Predicate;
 
-public class Maze {
-    private final Random rand = new Random();
+
+public class Maze implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     private final Cell[][] cells;
 
-    public Maze(int height, int width) {
+    private Maze(int height, int width) {
         cells = new Cell[height][width];
         for (int i = 0; i < cells.length; i++) {
             for (int j = 0; j < cells[0].length; j++) {
@@ -19,8 +24,26 @@ public class Maze {
         }
     }
 
+    public static Maze deserialize(String fileName) {
+        try (
+                var is = new ObjectInputStream(
+                        new BufferedInputStream(Files.newInputStream(Path.of(fileName)))
+                )
+        ) {
+            return (Maze) is.readObject();
+        } catch (IOException e) {
+            System.out.println("The file " + fileName + " does not exist");
+        } catch (ClassNotFoundException e) {
+            System.out.println("Cannot load the maze. It has an invalid format");
+        }
 
-    public void generate() {
+        return null;
+    }
+
+    public static Maze generate(int height, int width) {
+        var rand = new Random();
+        var maze = new Maze(height, width);
+        var cells = maze.cells;
         cells[1][1].makePassage();
         var list = new ArrayList<>(cells[1][1].getPotentialPassages());
         while (!list.isEmpty()) {
@@ -31,10 +54,7 @@ public class Maze {
             }
             list.remove(randomNeighbor);
         }
-        makeEntrances();
-    }
 
-    private void makeEntrances() {
         while (true) {
             var i = rand.nextInt(cells.length);
             if (!cells[i][1].isWall) {
@@ -50,6 +70,22 @@ public class Maze {
                 break;
             }
         }
+
+        return maze;
+    }
+
+    public void serialize(String fileName) {
+        try (
+                var os = new ObjectOutputStream(
+                        new BufferedOutputStream(Files.newOutputStream(Path.of(fileName)))
+                )
+        ) {
+            os.writeObject(this);
+        } catch (IOException e) {
+            System.out.println("Error occurred while working with file:\n"
+                    + fileName);
+            e.printStackTrace();
+        }
     }
 
     public void print() {
@@ -62,7 +98,9 @@ public class Maze {
     }
 
 
-    private class Cell {
+    private class Cell implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 2L;
         private final int x;
         private final int y;
         private boolean isWall;
@@ -87,8 +125,8 @@ public class Maze {
             if (y + 1 != cells[0].length - 1) {
                 list.add(cells[x][y + 1]);
             }
-            list.removeIf(Cell::isWall);
 
+            list.removeIf(Cell::isWall);
             if (list.size() != 1) {
                 return false;
             }
@@ -131,8 +169,8 @@ public class Maze {
             if (y + 1 != cells[0].length - 1) {
                 list.add(cells[x][y + 1]);
             }
-            list.removeIf(Predicate.not(Cell::isWall));
 
+            list.removeIf(Predicate.not(Cell::isWall));
             return list;
         }
 
@@ -149,11 +187,9 @@ public class Maze {
             if (this == o) {
                 return true;
             }
-
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-
             Cell cell = (Cell) o;
             return x == cell.x && y == cell.y && isWall == cell.isWall;
         }
